@@ -1,0 +1,2 @@
+[target.'cfg(any(unix, not(unix))']
+rustflags = ["--cfg", "uuid_unstable"]
