@@ -1,6 +1,6 @@
 use rusqlite::{params, Connection, Result};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct GetTicket {
     db_path: String,
 }
@@ -23,7 +23,7 @@ impl GetTicket {
             .map_err(|e| e.to_string())?;
 
         let mut stmt = connection
-            .prepare("SELECT ticket_id, event_id, email, price FROM ticket WHERE ticket_id = ?")
+            .prepare("SELECT * FROM ticket WHERE ticket_id = ?")
             .map_err(|e| e.to_string())?;
 
         let output = stmt
@@ -41,6 +41,7 @@ impl GetTicket {
     }
 }
 
+#[derive(Debug)]
 pub struct Output {
     pub ticket_id: String,
     pub event_id: String,

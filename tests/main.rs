@@ -10,7 +10,7 @@ mod tests {
         let purchase_ticket = PurchaseTicket::new("database.sqlite").await;
 
         let input_purchase_ticket = Input {
-            event_id: "".to_string(),
+            event_id: "161d4eea-cc10-4c42-94d6-5a09fb3bd72e".to_string(),
             email: "john.doe@email.com".to_string(),
         };
 
