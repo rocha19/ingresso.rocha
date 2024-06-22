@@ -20,7 +20,7 @@ impl PurchaseTicket {
             .unwrap();
 
         let ticket_repository = ticket_repository::TicketRepositorySqlite::new(&self.db_path).await;
-        let ticket = Ticket::create(input.event_id, input.email, event_data.price);
+        let ticket = Ticket::create(input.event_id, input.email, event_data.price)?;
         let _ = ticket_repository.save_ticket(ticket.clone()).await;
 
         Ok(Output {
