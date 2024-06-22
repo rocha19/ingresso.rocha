@@ -72,3 +72,35 @@ impl TicketRepository for TicketRepositorySqlite {
         Ok(output)
     }
 }
+
+#[allow(dead_code)]
+#[derive(Default)]
+pub struct TicketRepositoryInMemory {
+    tickets: RwLock<Vec<Ticket>>,
+}
+
+impl TicketRepositoryInMemory {
+    pub fn new() -> Self {
+        Self {
+            tickets: RwLock::new(vec![]),
+        }
+    }
+}
+
+#[async_trait]
+impl TicketRepository for TicketRepositoryInMemory {
+    async fn save_ticket(&self, ticket: Ticket) {
+        let mut tickets = self.tickets.write().await;
+        tickets.push(ticket);
+    }
+
+    async fn get_ticket(&self, ticket_id: String) -> Result<Ticket, String> {
+        let tickets = self.tickets.read().await;
+        for ticket in tickets.iter() {
+            if ticket.ticket_id == ticket_id {
+                return Ok(ticket.clone());
+            }
+        }
+        Err("Ticket not found".to_string())
+    }
+}

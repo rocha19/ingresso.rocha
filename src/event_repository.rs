@@ -49,3 +49,28 @@ impl EventRepository for EventRepositorySqlite {
         Ok(output)
     }
 }
+
+#[allow(dead_code)]
+#[derive(Default)]
+pub struct EventRepositoryInMemory {
+    events: RwLock<Vec<Event>>,
+}
+
+impl EventRepositoryInMemory {
+    pub fn new() -> Self {
+        Self {
+            events: RwLock::new(vec![]),
+        }
+    }
+}
+
+#[async_trait]
+impl EventRepository for EventRepositoryInMemory {
+    async fn get_event(&self, _: String) -> Result<Event, String> {
+        Ok(Event {
+            event_id: "161d4eea-cc10-4c42-94d6-5a09fb3bd72e".to_string(),
+            description: "Rockfest".to_string(),
+            price: 100.00,
+        })
+    }
+}
