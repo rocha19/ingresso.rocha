@@ -1,5 +1,3 @@
-use uuid::Uuid;
-
 use crate::{event_repository::EventRepositorySqlite, ticket::Ticket, ticket_repository};
 
 #[derive(Default, Debug)]
@@ -15,9 +13,6 @@ impl PurchaseTicket {
     }
 
     pub async fn execute(&self, input: Input) -> Result<Output, String> {
-        let uuid = Uuid::now_v7();
-        let ticket_id = uuid.to_string();
-
         let event_repository = EventRepositorySqlite::new(&self.db_path).await;
         let event_data = event_repository
             .get_event(input.event_id.clone())
@@ -25,16 +20,11 @@ impl PurchaseTicket {
             .unwrap();
 
         let ticket_repository = ticket_repository::TicketRepositorySqlite::new(&self.db_path).await;
-        let ticket = Ticket {
-            ticket_id: ticket_id.clone(),
-            event_id: input.event_id,
-            email: input.email,
-            price: event_data.price,
-        };
-        let _ = ticket_repository.save_ticket(ticket).await;
+        let ticket = Ticket::create(input.event_id, input.email, event_data.price);
+        let _ = ticket_repository.save_ticket(ticket.clone()).await;
 
         Ok(Output {
-            ticket_id: Ok(ticket_id),
+            ticket_id: Ok(ticket.ticket_id),
         })
     }
 }
