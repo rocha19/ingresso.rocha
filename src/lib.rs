@@ -1,3 +1,4 @@
+pub mod email;
 pub mod event;
 pub mod event_repository;
 pub mod get_ticket;

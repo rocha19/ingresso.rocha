@@ -1,6 +1,8 @@
-use regex::Regex;
 use std::{result::Result, string::String};
 use uuid::Uuid;
+
+use crate::email::Email;
+
 #[derive(Clone, Debug)]
 pub struct Ticket {
     pub ticket_id: String,
@@ -21,22 +23,16 @@ impl Ticket {
         email: String,
         price: f64,
     ) -> Result<Self, TicketCreationError> {
-        let email_regex = Regex::new(r"^[\w\.-]+@[\w\.-]+\.\w+$").unwrap();
-
-        match (email_regex.is_match(&email), price > 0.0) {
-            (false, _) => Err(TicketCreationError::InvalidEmailFormat),
+        let valid_email = Email::new(email);
+        match (valid_email.is_ok(), price > 0.0) {
+            (true, true) => Ok(Ticket {
+                ticket_id: Uuid::now_v7().to_string(),
+                event_id,
+                email: valid_email.unwrap().get_value(),
+                price,
+            }),
             (_, false) => Err(TicketCreationError::InvalidPrice),
-            (true, true) => {
-                let uuid = Uuid::now_v7();
-                let ticket_id = uuid.to_string();
-
-                Ok(Self {
-                    ticket_id,
-                    event_id,
-                    email,
-                    price,
-                })
-            }
+            (false, _) => Err(TicketCreationError::InvalidEmailFormat),
         }
     }
 }
