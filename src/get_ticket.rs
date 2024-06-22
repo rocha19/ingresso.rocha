@@ -1,19 +1,20 @@
-use crate::ticket_repository::TicketRepositorySqlite;
+use std::sync::Arc;
 
-#[derive(Default, Debug)]
+use tokio::sync::RwLock;
+
+use crate::ticket_repository::TicketRepository;
+
 pub struct GetTicket {
-    db_path: String,
+    ticket_repository: Arc<RwLock<dyn TicketRepository>>,
 }
 
 impl GetTicket {
-    pub async fn new(db_path: &str) -> Self {
-        Self {
-            db_path: db_path.to_string(),
-        }
+    pub async fn new(ticket_repository: Arc<RwLock<dyn TicketRepository>>) -> Self {
+        Self { ticket_repository }
     }
 
     pub async fn execute(&self, ticket_id: String) -> Result<Output, String> {
-        let repository = TicketRepositorySqlite::new(&self.db_path).await;
+        let repository = self.ticket_repository.read().await;
         let ticket = repository.get_ticket(ticket_id).await.unwrap();
 
         Ok(Output {

@@ -1,4 +1,6 @@
+use async_trait::async_trait;
 use rusqlite::{params, Connection, Result};
+use tokio::sync::RwLock;
 
 use crate::ticket::Ticket;
 
@@ -7,17 +9,26 @@ pub struct TicketRepositorySqlite {
 }
 
 impl TicketRepositorySqlite {
-    pub async fn new(db_path: &str) -> Self {
+    pub async fn new() -> Self {
         Self {
-            db_path: db_path.to_string(),
+            db_path: "database.sqlite".to_string(),
         }
     }
 
     pub async fn establish_connection(&self) -> Result<Connection> {
         Connection::open(&self.db_path)
     }
+}
 
-    pub async fn save_ticket(&self, ticket: Ticket) {
+#[async_trait]
+pub trait TicketRepository {
+    async fn save_ticket(&self, ticket: Ticket);
+    async fn get_ticket(&self, ticket_id: String) -> Result<Ticket, String>;
+}
+
+#[async_trait]
+impl TicketRepository for TicketRepositorySqlite {
+    async fn save_ticket(&self, ticket: Ticket) {
         let connection = self
             .establish_connection()
             .await
@@ -37,7 +48,7 @@ impl TicketRepositorySqlite {
             .map_err(|e| e.to_string());
     }
 
-    pub async fn get_ticket(&self, ticket_id: String) -> Result<Ticket, String> {
+    async fn get_ticket(&self, ticket_id: String) -> Result<Ticket, String> {
         let connection = self
             .establish_connection()
             .await
