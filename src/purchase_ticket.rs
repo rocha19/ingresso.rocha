@@ -1,4 +1,8 @@
-use crate::{event_repository::EventRepositorySqlite, ticket::Ticket, ticket_repository};
+use crate::{
+    event_repository::EventRepositorySqlite,
+    ticket::{Ticket, TicketCreationError},
+    ticket_repository,
+};
 
 #[derive(Default, Debug)]
 pub struct PurchaseTicket {
@@ -20,12 +24,16 @@ impl PurchaseTicket {
             .unwrap();
 
         let ticket_repository = ticket_repository::TicketRepositorySqlite::new(&self.db_path).await;
-        let ticket = Ticket::create(input.event_id, input.email, event_data.price)?;
-        let _ = ticket_repository.save_ticket(ticket.clone()).await;
-
-        Ok(Output {
-            ticket_id: Ok(ticket.ticket_id),
-        })
+        match Ticket::create(input.event_id, input.email, event_data.price) {
+            Ok(ticket) => {
+                let _ = ticket_repository.save_ticket(ticket.clone()).await;
+                Ok(Output {
+                    ticket_id: Ok(ticket.ticket_id),
+                })
+            }
+            Err(TicketCreationError::InvalidEmailFormat) => Err("Invalid email format".to_string()),
+            Err(TicketCreationError::InvalidPrice) => Err("Invalid price".to_string()),
+        }
     }
 }
 

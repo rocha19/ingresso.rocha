@@ -9,22 +9,34 @@ pub struct Ticket {
     pub price: f64,
 }
 
-impl Ticket {
-    pub fn create(event_id: String, email: String, price: f64) -> Result<Self, String> {
-        let uuid = Uuid::now_v7();
-        let ticket_id = uuid.to_string();
+#[derive(Debug)]
+pub enum TicketCreationError {
+    InvalidEmailFormat,
+    InvalidPrice,
+}
 
+impl Ticket {
+    pub fn create(
+        event_id: String,
+        email: String,
+        price: f64,
+    ) -> Result<Self, TicketCreationError> {
         let email_regex = Regex::new(r"^[\w\.-]+@[\w\.-]+\.\w+$").unwrap();
 
-        if !email_regex.is_match(&email) {
-            return Err("Invalid email format".to_string());
-        }
+        match (email_regex.is_match(&email), price > 0.0) {
+            (false, _) => Err(TicketCreationError::InvalidEmailFormat),
+            (_, false) => Err(TicketCreationError::InvalidPrice),
+            (true, true) => {
+                let uuid = Uuid::now_v7();
+                let ticket_id = uuid.to_string();
 
-        Ok(Self {
-            ticket_id,
-            event_id,
-            email,
-            price,
-        })
+                Ok(Self {
+                    ticket_id,
+                    event_id,
+                    email,
+                    price,
+                })
+            }
+        }
     }
 }
