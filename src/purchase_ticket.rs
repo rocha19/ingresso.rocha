@@ -1,5 +1,6 @@
-use rusqlite::{params, Connection, Result};
 use uuid::Uuid;
+
+use crate::{event_repository::EventRepositorySqlite, ticket::Ticket, ticket_repository};
 
 #[derive(Default, Debug)]
 pub struct PurchaseTicket {
@@ -13,31 +14,24 @@ impl PurchaseTicket {
         }
     }
 
-    pub async fn establish_connection(&self) -> Result<Connection> {
-        Connection::open(&self.db_path)
-    }
-
     pub async fn execute(&self, input: Input) -> Result<Output, String> {
         let uuid = Uuid::now_v7();
         let ticket_id = uuid.to_string();
 
-        let connection = self.establish_connection().await.unwrap();
+        let event_repository = EventRepositorySqlite::new(&self.db_path).await;
+        let event_data = event_repository
+            .get_event(input.event_id.clone())
+            .await
+            .unwrap();
 
-        let mut stmt = connection
-            .prepare("SELECT * FROM event WHERE event_id = ?")
-            .map_err(|e| e.to_string())?;
-
-        let mut event_data: f64 = 0.0;
-        stmt.query_row(params![input.event_id], |row| {
-            event_data = row.get(2).unwrap();
-            Ok(())
-        })
-        .map_err(|e| e.to_string())?;
-
-        let _ = connection.execute(
-            "INSERT INTO ticket (ticket_id, event_id, email, price) VALUES (?, ?, ?, ?)",
-            params![ticket_id, input.event_id, input.email, event_data], // occupied_spaces initialized as 0
-        );
+        let ticket_repository = ticket_repository::TicketRepositorySqlite::new(&self.db_path).await;
+        let ticket = Ticket {
+            ticket_id: ticket_id.clone(),
+            event_id: input.event_id,
+            email: input.email,
+            price: event_data.price,
+        };
+        let _ = ticket_repository.save_ticket(ticket).await;
 
         Ok(Output {
             ticket_id: Ok(ticket_id),

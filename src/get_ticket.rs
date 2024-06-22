@@ -1,4 +1,4 @@
-use rusqlite::{params, Connection, Result};
+use crate::ticket_repository::TicketRepositorySqlite;
 
 #[derive(Default, Debug)]
 pub struct GetTicket {
@@ -12,32 +12,16 @@ impl GetTicket {
         }
     }
 
-    pub async fn establish_connection(&self) -> Result<Connection> {
-        Connection::open(&self.db_path)
-    }
-
     pub async fn execute(&self, ticket_id: String) -> Result<Output, String> {
-        let connection = self
-            .establish_connection()
-            .await
-            .map_err(|e| e.to_string())?;
+        let repository = TicketRepositorySqlite::new(&self.db_path).await;
+        let ticket = repository.get_ticket(ticket_id).await.unwrap();
 
-        let mut stmt = connection
-            .prepare("SELECT * FROM ticket WHERE ticket_id = ?")
-            .map_err(|e| e.to_string())?;
-
-        let output = stmt
-            .query_row(params![ticket_id], |row| {
-                Ok(Output {
-                    ticket_id: row.get(0)?,
-                    event_id: row.get(1)?,
-                    email: row.get(2)?,
-                    price: row.get(3)?,
-                })
-            })
-            .map_err(|e| e.to_string())?;
-
-        Ok(output)
+        Ok(Output {
+            ticket_id: ticket.ticket_id,
+            event_id: ticket.event_id,
+            email: ticket.email,
+            price: ticket.price,
+        })
     }
 }
 
