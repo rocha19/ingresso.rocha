@@ -18,6 +18,7 @@ mod tests {
             Arc::new(RwLock::new(event_repository_sqlite));
         let ticket_repository: Arc<RwLock<dyn TicketRepository>> =
             Arc::new(RwLock::new(ticket_repository_sqlite));
+
         let purchase_ticket =
             PurchaseTicket::new(event_repository, ticket_repository.clone()).await;
 
