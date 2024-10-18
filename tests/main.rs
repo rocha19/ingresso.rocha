@@ -12,19 +12,13 @@ mod tests {
 
     #[tokio::test]
     async fn buy_event_ticket() {
-        /*
-        let parking_lot_repository_in_memory = ParkingLotRepositoryInMemory::new();
-        let repository: Arc<RwLock<dyn ParkingLotRepository>> =
-            Arc::new(RwLock::new(parking_lot_repository_in_memory));
-        let enter_parking_lot = EnterParkingLot::new(repository.clone());
-        let get_parking_lot = GetParkingLot::new(repository);
-        */
         let event_repository_sqlite = EventRepositorySqlite::new().await;
         let ticket_repository_sqlite = TicketRepositorySqlite::new().await;
         let event_repository: Arc<RwLock<dyn EventRepository>> =
             Arc::new(RwLock::new(event_repository_sqlite));
         let ticket_repository: Arc<RwLock<dyn TicketRepository>> =
             Arc::new(RwLock::new(ticket_repository_sqlite));
+
         let purchase_ticket =
             PurchaseTicket::new(event_repository, ticket_repository.clone()).await;
 
